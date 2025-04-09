@@ -48,12 +48,16 @@ int main(int argc, char* argv[]) {
     std::vector<int> signal = readFile(filename);
 
     if (!signal.empty()) {
+        if (signal.size() != 1023) {
+            std::cerr << "Anzahl Elemente in Summensignal != 1023! \n";
+        } else {
         std::cout << "Anzahl Werte: " << signal.size() << "\n";
         std::cout << "Eingelesene Zahlen:\n";
         for (int n : signal) {
             std::cout << n << " ";
         }
         std::cout << std::endl;
+    }
     }
 
     return 0;
