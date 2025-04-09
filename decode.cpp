@@ -48,9 +48,10 @@ int main(int argc, char* argv[]) {
     std::vector<int> signal = readFile(filename);
 
     if (!signal.empty()) {
+        std::cout << "Anzahl Werte: " << signal.size() << "\n";
         std::cout << "Eingelesene Zahlen:\n";
         for (int n : signal) {
-            std::cout << n << " | ";
+            std::cout << n << " ";
         }
         std::cout << std::endl;
     }
