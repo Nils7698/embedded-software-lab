@@ -1,104 +1,148 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <vector>
-#include <bitset>
+#include <sstream>
+#include <math.h>
 
-// Satellite configuration structure
-struct SatelliteConfig {
-    int id;
-    int tap1;
-    int tap2;
-    int t;
-};
+using namespace std;
 
-// Configuration of all 24 satellites
-std::vector<SatelliteConfig> satelliteConfigs = {
-    {1, 2, 6, 5},   {2, 3, 7, 6},   {3, 4, 8, 7},   {4, 5, 9, 8},   {5, 1, 9, 17},
-    {6, 2, 10, 18}, {7, 1, 8, 139}, {8, 2, 9, 140}, {9, 3, 10, 141}, {10, 2, 3, 251},
-    {11, 3, 4, 252}, {12, 5, 6, 254}, {13, 6, 7, 255}, {14, 7, 8, 256}, {15, 8, 9, 257},
-    {16, 9, 10, 258}, {17, 1, 4, 469}, {18, 2, 5, 470}, {19, 3, 6, 471}, {20, 4, 7, 472},
-    {21, 5, 8, 473}, {22, 6, 9, 474}, {23, 1, 3, 509}, {24, 4, 6, 512}
-};
-
-// Function to read the signal from a file
-std::vector<int> readFile(const std::string& filename) {
-    std::ifstream inputFile(filename);
-    if (!inputFile) {
-        std::cerr << "Fehler: Datei konnte nicht geöffnet werden!" << std::endl;
-        return {};
+void readFile(string& fileName, string& fileContent) {
+    ifstream file(fileName);
+    if (file.is_open())
+    {
+        getline(file, fileContent);
+        file.close();
     }
-
-    std::vector<int> numbers;
-    int num;
-
-    while (inputFile >> num) {
-        numbers.push_back(num);
-    }
-
-    inputFile.close();
-    return numbers;
+    else cout << "Fehler: Datei konnte nicht geöffnet werden!" << endl;
 }
 
-// Function to generate the Gold code for a satellite
-std::vector<int> generateGoldCode(const SatelliteConfig& config) {
-    std::vector<int> g1(1023, 1); // G1 register
-    std::vector<int> g2(1023, 1); // G2 register
-    std::vector<int> goldCode(1023);
-
-    for (int i = 0; i < 1023; ++i) {
-        // Generate G1
-        int g1NewBit = g1[2] ^ g1[9];
-        g1.insert(g1.begin(), g1NewBit);
-        g1.pop_back();
-
-        // Generate G2
-        int g2NewBit = g2[config.tap1 - 1] ^ g2[config.tap2 - 1];
-        g2.insert(g2.begin(), g2NewBit);
-        g2.pop_back();
-
-        // Combine G1 and G2 to form the Gold code
-        goldCode[i] = g1.back() ^ g2[config.t - 1];
+vector<int> parseLineToVector(string& line) {
+    vector<int> sequence;
+    stringstream lineStream(line);
+    int number;
+    
+    while(lineStream >> number)
+    {
+        sequence.push_back(number);
     }
-
-    return goldCode;
+    
+    return sequence;
 }
 
-// Function to decode the sum signal
-void decodeSignal(const std::vector<int>& signal) {
-    for (const auto& config : satelliteConfigs) {
-        std::vector<int> goldCode = generateGoldCode(config);
+vector<int> getSignal(string& file){
+    string content;
+    readFile(file, content);
+    return parseLineToVector(content);
+}
 
-        // Correlate the signal with the Gold code
-        int correlation = 0;
-        for (size_t i = 0; i < signal.size(); ++i) {
-            correlation += signal[i] * goldCode[i];
-        }
+void shiftSequenceByOne(int sequence[10]) {
+    int temp = sequence[9];
+    for(int i = 9; i > 0; i--){
+        sequence[i] = sequence[i - 1];
+    }
+    sequence[0] = temp;
+}
 
-        // Check if the correlation is strong enough to identify the satellite
-        if (correlation > 20) { // Threshold for detection
-            std::cout << "Satellite " << config.id << " detected with correlation: " << correlation << std::endl;
-        }
+void createGoldCodeForSat(int goldCode[1023], int x, int y){
+    int sequence1[10] = {1,1,1,1,1,1,1,1,1,1};
+    int sequence2[10] = {1,1,1,1,1,1,1,1,1,1};
+    
+    int indexCounter = 0;
+    while(indexCounter < 1023) {
+        int temp2 = sequence2[x - 1] ^ sequence2[y - 1];
+        int new2 = sequence2[9] ^ sequence2[8] ^ sequence2[7] ^ sequence2[5] ^ sequence2[2] ^ sequence2[1];
+        int new1 = sequence1[9] ^ sequence1[2];
+        
+        goldCode[indexCounter] = (temp2 ^ sequence1[9]) == 0 ? -1 : 1;
+        indexCounter++;
+        
+        shiftSequenceByOne(sequence1);
+        shiftSequenceByOne(sequence2);
+        sequence2[0] = new2;
+        sequence1[0] = new1;
     }
 }
 
-int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cerr << "Fehler: " << argv[0] << " <Dateiname>" << std::endl;
-        return 1;
+void createGoldCodes(int goldCodes[24][1023]) {
+    createGoldCodeForSat(goldCodes[0],  2, 6);
+    createGoldCodeForSat(goldCodes[1],  3, 7);
+    createGoldCodeForSat(goldCodes[2],  4, 8);
+    createGoldCodeForSat(goldCodes[3],  5, 9);
+    createGoldCodeForSat(goldCodes[4],  1, 9);
+    createGoldCodeForSat(goldCodes[5],  2, 10);
+    createGoldCodeForSat(goldCodes[6],  1, 8);
+    createGoldCodeForSat(goldCodes[7],  2, 9);
+    createGoldCodeForSat(goldCodes[8],  3, 10);
+    createGoldCodeForSat(goldCodes[9],  2, 3);
+    createGoldCodeForSat(goldCodes[10], 3, 4);
+    createGoldCodeForSat(goldCodes[11], 5, 6);
+    createGoldCodeForSat(goldCodes[12], 6, 7);
+    createGoldCodeForSat(goldCodes[13], 7, 8);
+    createGoldCodeForSat(goldCodes[14], 8, 9);
+    createGoldCodeForSat(goldCodes[15], 9, 10);
+    createGoldCodeForSat(goldCodes[16], 1, 4);
+    createGoldCodeForSat(goldCodes[17], 2, 5);
+    createGoldCodeForSat(goldCodes[18], 3, 6);
+    createGoldCodeForSat(goldCodes[19], 4, 7);
+    createGoldCodeForSat(goldCodes[20], 5, 8);
+    createGoldCodeForSat(goldCodes[21], 6, 9);
+    createGoldCodeForSat(goldCodes[22], 1, 3);
+    createGoldCodeForSat(goldCodes[23], 4, 6);
+}
+
+float calculateScalar(vector<int> signal, int goldCode[1023], int delta) {
+    float skalar = 0;
+    for(int i = 0; i < 1023; i++) {
+        skalar += signal[i] * goldCode[(i + delta) % 1023] / 1.0;
     }
+    return skalar;
+}
 
-    std::string filename = argv[1];
-    std::cout << "Lese Datei " << filename << std::endl;
-    std::vector<int> signal = readFile(filename);
+void interpretSignal(vector<int> signal, int goldCodes[24][1023]) {
 
-    if (!signal.empty()) {
-        if (signal.size() != 1023) {
-            std::cerr << "Anzahl Elemente in Summensignal != 1023! \n";
-        } else {
-            std::cout << "Anzahl Werte: " << signal.size() << "\n";
-            decodeSignal(signal);
+    int numberOfInterferingSatellites = 3;
+    float maxNoiceValue = 65.0;
+    float upperPeak = 1023 -  numberOfInterferingSatellites * maxNoiceValue;
+    float lowerPeak = -1023 + numberOfInterferingSatellites * maxNoiceValue;
+    
+    for(int satCounter = 0; satCounter < 24; satCounter++) {
+        for(int delta = 0; delta < 1024; delta++) {
+            // calculate the scalar product
+            // between the signal and the gold code
+            // with the given delta
+            // and check if it is above or below the threshold
+            float scalar = calculateScalar(signal, goldCodes[satCounter], delta);
+            if(scalar >= upperPeak || scalar <= lowerPeak) {
+                int bit = (scalar >= upperPeak) ? 1 : 0;
+                cout << "Satellit " << satCounter + 1 << " hat folgedes Bit gesendet: " << bit << " (Delta: " << delta << ")" << endl;
+                break;
+            }
         }
     }
+    
+}
 
+int main(int argc, const char * argv[]) {
+    if(argc < 2)
+    {
+        cout << "Fehler: falsche Argumente" << endl;
+        return 0;
+    }
+    
+    string fileName = argv[1];
+    vector<int> signal = getSignal(fileName);
+    //for (auto i = signal.begin(); i != signal.end(); ++i)
+    //  cout << *i << ' ';
+    //cout << "\n-------\n";
+    
+    int goldCodes[24][1023];
+    createGoldCodes(goldCodes);
+    //for(int i = 0; i < 1023; i++)
+    //    cout << goldCodes[23][i] << ", ";
+    //cout << endl;
+    
+    interpretSignal(signal, goldCodes);
+    
     return 0;
 }
