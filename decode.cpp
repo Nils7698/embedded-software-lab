@@ -3,60 +3,74 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <math.h>
+#include <array>
 
-using namespace std;
+// Konstante Längen und Größen für Gold-Codes und Satelliten
+constexpr int SEQ_LENGTH = 1023;
+constexpr int SAT_COUNT = 24;
+constexpr int SHIFT_REGISTER_SIZE = 10;
 
-void readFile(string& fileName, string& fileContent) {
-    ifstream file(fileName);
-    if (file.is_open())
-    {
-        getline(file, fileContent);
+using Signal = std::vector<int>;
+using GoldCode = std::array<int, SEQ_LENGTH>;
+using GoldCodeArray = std::array<GoldCode, SAT_COUNT>;
+
+/// Liest eine Datei ein und speichert den Inhalt als String
+void readFile(const std::string& fileName, std::string& fileContent) {
+    std::ifstream file(fileName);
+    if (file.is_open()) {
+        std::getline(file, fileContent);
         file.close();
+    } else {
+        std::cerr << "Fehler: Datei konnte nicht geöffnet werden!" << std::endl;
     }
-    else cout << "Fehler: Datei konnte nicht geöffnet werden!" << endl;
 }
 
-vector<int> parseLineToVector(string& line) {
-    vector<int> sequence;
-    stringstream lineStream(line);
+/// Konvertiert eine Zeile aus der Datei in eine Zahlenfolge (Signalvektor)
+Signal parseLineToVector(const std::string& line) {
+    Signal sequence;
+    std::stringstream lineStream(line);
     int number;
-    
-    while(lineStream >> number)
-    {
+    while (lineStream >> number) {
         sequence.push_back(number);
     }
-    
     return sequence;
 }
 
-vector<int> getSignal(string& file){
-    string content;
+/// Kombinierte Funktion zum Einlesen und Umwandeln der Signaldatei
+Signal getSignal(const std::string& file) {
+    std::string content;
     readFile(file, content);
     return parseLineToVector(content);
 }
 
-void shiftSequenceByOne(int sequence[10]) {
-    int temp = sequence[9];
-    for(int i = 9; i > 0; i--){
+/// Zyklisches Verschieben eines 10-Bit-Schieberegisters um eine Position
+void shiftSequenceByOne(std::array<int, SHIFT_REGISTER_SIZE>& sequence) {
+    int temp = sequence.back();
+    for (int i = SHIFT_REGISTER_SIZE - 1; i > 0; --i) {
         sequence[i] = sequence[i - 1];
     }
     sequence[0] = temp;
 }
 
-void createGoldCodeForSat(int goldCode[1023], int x, int y){
-    int sequence1[10] = {1,1,1,1,1,1,1,1,1,1};
-    int sequence2[10] = {1,1,1,1,1,1,1,1,1,1};
-    
-    int indexCounter = 0;
-    while(indexCounter < 1023) {
+/// Erzeugt einen Gold-Code für einen Satelliten mit gegebenen TAP-Paaren
+void createGoldCodeForSat(GoldCode& goldCode, int x, int y) {
+    // Initialisiere zwei Schieberegister mit 1en
+    std::array<int, SHIFT_REGISTER_SIZE> sequence1{1,1,1,1,1,1,1,1,1,1};
+    std::array<int, SHIFT_REGISTER_SIZE> sequence2{1,1,1,1,1,1,1,1,1,1};
+
+    // Generiere 1023 Bits langen Gold-Code
+    for (int i = 0; i < SEQ_LENGTH; ++i) {
+        // XOR der gewählten Taps (x, y) aus dem zweiten Register
         int temp2 = sequence2[x - 1] ^ sequence2[y - 1];
+
+        // Feedback für die Register (entsprechend GPS-Spezifikation)
         int new2 = sequence2[9] ^ sequence2[8] ^ sequence2[7] ^ sequence2[5] ^ sequence2[2] ^ sequence2[1];
         int new1 = sequence1[9] ^ sequence1[2];
-        
-        goldCode[indexCounter] = (temp2 ^ sequence1[9]) == 0 ? -1 : 1;
-        indexCounter++;
-        
+
+        // Ergebnis-Bit: XOR von temp2 und MSB aus Register 1, um -1/1 darzustellen
+        goldCode[i] = (temp2 ^ sequence1[9]) == 0 ? -1 : 1;
+
+        // Register um eins verschieben und neuen Wert setzen
         shiftSequenceByOne(sequence1);
         shiftSequenceByOne(sequence2);
         sequence2[0] = new2;
@@ -64,85 +78,67 @@ void createGoldCodeForSat(int goldCode[1023], int x, int y){
     }
 }
 
-void createGoldCodes(int goldCodes[24][1023]) {
-    createGoldCodeForSat(goldCodes[0],  2, 6);
-    createGoldCodeForSat(goldCodes[1],  3, 7);
-    createGoldCodeForSat(goldCodes[2],  4, 8);
-    createGoldCodeForSat(goldCodes[3],  5, 9);
-    createGoldCodeForSat(goldCodes[4],  1, 9);
-    createGoldCodeForSat(goldCodes[5],  2, 10);
-    createGoldCodeForSat(goldCodes[6],  1, 8);
-    createGoldCodeForSat(goldCodes[7],  2, 9);
-    createGoldCodeForSat(goldCodes[8],  3, 10);
-    createGoldCodeForSat(goldCodes[9],  2, 3);
-    createGoldCodeForSat(goldCodes[10], 3, 4);
-    createGoldCodeForSat(goldCodes[11], 5, 6);
-    createGoldCodeForSat(goldCodes[12], 6, 7);
-    createGoldCodeForSat(goldCodes[13], 7, 8);
-    createGoldCodeForSat(goldCodes[14], 8, 9);
-    createGoldCodeForSat(goldCodes[15], 9, 10);
-    createGoldCodeForSat(goldCodes[16], 1, 4);
-    createGoldCodeForSat(goldCodes[17], 2, 5);
-    createGoldCodeForSat(goldCodes[18], 3, 6);
-    createGoldCodeForSat(goldCodes[19], 4, 7);
-    createGoldCodeForSat(goldCodes[20], 5, 8);
-    createGoldCodeForSat(goldCodes[21], 6, 9);
-    createGoldCodeForSat(goldCodes[22], 1, 3);
-    createGoldCodeForSat(goldCodes[23], 4, 6);
-}
+/// Erstellt Gold-Codes für alle 24 Satelliten mit spezifischen Tap-Kombinationen
+void createGoldCodes(GoldCodeArray& goldCodes) {
+    const std::array<std::pair<int, int>, SAT_COUNT> tapPairs {{
+        {2, 6}, {3, 7}, {4, 8}, {5, 9}, {1, 9}, {2, 10},
+        {1, 8}, {2, 9}, {3, 10}, {2, 3}, {3, 4}, {5, 6},
+        {6, 7}, {7, 8}, {8, 9}, {9, 10}, {1, 4}, {2, 5},
+        {3, 6}, {4, 7}, {5, 8}, {6, 9}, {1, 3}, {4, 6}
+    }};
 
-float calculateScalar(vector<int> signal, int goldCode[1023], int delta) {
-    float skalar = 0;
-    for(int i = 0; i < 1023; i++) {
-        skalar += signal[i] * goldCode[(i + delta) % 1023] / 1.0;
+    for (int i = 0; i < SAT_COUNT; ++i) {
+        createGoldCodeForSat(goldCodes[i], tapPairs[i].first, tapPairs[i].second);
     }
-    return skalar;
 }
 
-void interpretSignal(vector<int> signal, int goldCodes[24][1023]) {
+/// Berechnet das Skalarprodukt (Korrelation) zwischen Signal und Gold-Code bei gegebener Verschiebung
+float calculateScalar(const Signal& signal, const GoldCode& goldCode, int delta) {
+    float scalar = 0.0f;
+    for (int i = 0; i < SEQ_LENGTH; ++i) {
+        scalar += signal[i] * goldCode[(i + delta) % SEQ_LENGTH];
+    }
+    return scalar;
+}
 
-    int numberOfInterferingSatellites = 3;
-    float maxNoiceValue = 65.0;
-    float upperPeak = 1023 -  numberOfInterferingSatellites * maxNoiceValue;
-    float lowerPeak = -1023 + numberOfInterferingSatellites * maxNoiceValue;
-    
-    for(int satCounter = 0; satCounter < 24; satCounter++) {
-        for(int delta = 0; delta < 1024; delta++) {
-            // calculate the scalar product
-            // between the signal and the gold code
-            // with the given delta
-            // and check if it is above or below the threshold
-            float scalar = calculateScalar(signal, goldCodes[satCounter], delta);
-            if(scalar >= upperPeak || scalar <= lowerPeak) {
-                int bit = (scalar >= upperPeak) ? 1 : 0;
-                cout << "Satellit " << satCounter + 1 << " hat folgedes Bit gesendet: " << bit << " (Delta: " << delta << ")" << endl;
-                break;
+/// Interpretiert das GPS-Summensignal und identifiziert gesendete Bits der Satelliten
+void interpretSignal(const Signal& signal, const GoldCodeArray& goldCodes) {
+    constexpr int interferingSatellites = 3;
+    constexpr float maxNoise = 65.0f;
+
+    // Schwellwerte für sichere Bit-Detektion
+    float upperThreshold = SEQ_LENGTH - interferingSatellites * maxNoise;
+    float lowerThreshold = -SEQ_LENGTH + interferingSatellites * maxNoise;
+
+    for (int satIndex = 0; satIndex < SAT_COUNT; ++satIndex) {
+        for (int delta = 0; delta < SEQ_LENGTH + 1; ++delta) {
+            // Berechne Korrelation mit verschobenem Gold-Code
+            float scalar = calculateScalar(signal, goldCodes[satIndex], delta);
+
+            // Wenn über dem Schwellwert: Bit ist 1, unter dem: Bit ist 0
+            if (scalar >= upperThreshold || scalar <= lowerThreshold) {
+                int bit = scalar >= upperThreshold ? 1 : 0;
+                std::cout << "Satellit " << (satIndex + 1)
+                          << " hat folgendes Bit gesendet: " << bit
+                          << " (Delta: " << delta << ")\n";
+                break; // Nur erstes gefundenes Bit pro Satellit ausgeben
             }
         }
     }
-    
 }
 
-int main(int argc, const char * argv[]) {
-    if(argc < 2)
-    {
-        cout << "Fehler: falsche Argumente" << endl;
-        return 0;
+int main(int argc, const char* argv[]) {
+    if (argc < 2) {
+        std::cerr << "Fehler: falsche Argumente" << std::endl;
+        return 1;
     }
     
-    string fileName = argv[1];
-    vector<int> signal = getSignal(fileName);
-    //for (auto i = signal.begin(); i != signal.end(); ++i)
-    //  cout << *i << ' ';
-    //cout << "\n-------\n";
-    
-    int goldCodes[24][1023];
+    std::string fileName = argv[1];
+    Signal signal = getSignal(fileName);
+
+    GoldCodeArray goldCodes;
     createGoldCodes(goldCodes);
-    //for(int i = 0; i < 1023; i++)
-    //    cout << goldCodes[23][i] << ", ";
-    //cout << endl;
-    
     interpretSignal(signal, goldCodes);
-    
+
     return 0;
 }
