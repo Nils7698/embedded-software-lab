@@ -5,7 +5,6 @@
 #include <sstream>
 #include <array>
 
-// Konstante Längen und Größen für Gold-Codes und Satelliten
 constexpr int SEQ_LENGTH = 1023;
 constexpr int SAT_COUNT = 24;
 constexpr int SHIFT_REGISTER_SIZE = 10;
@@ -103,12 +102,11 @@ float calculateScalar(const Signal& signal, const GoldCode& goldCode, int delta)
 
 /// Interpretiert das GPS-Summensignal und identifiziert gesendete Bits der Satelliten
 void interpretSignal(const Signal& signal, const GoldCodeArray& goldCodes) {
-    constexpr int interferingSatellites = 3;
-    constexpr float maxNoise = 65.0f;
+    float noise = 65.0f;
 
     // Schwellwerte für sichere Bit-Detektion
-    float upperThreshold = SEQ_LENGTH - interferingSatellites * maxNoise;
-    float lowerThreshold = -SEQ_LENGTH + interferingSatellites * maxNoise;
+    float upperThreshold = SEQ_LENGTH - noise;
+    float lowerThreshold = -SEQ_LENGTH + noise;
 
     for (int satIndex = 0; satIndex < SAT_COUNT; ++satIndex) {
         for (int delta = 0; delta < SEQ_LENGTH + 1; ++delta) {
@@ -118,9 +116,9 @@ void interpretSignal(const Signal& signal, const GoldCodeArray& goldCodes) {
             // Wenn über dem Schwellwert: Bit ist 1, unter dem: Bit ist 0
             if (scalar >= upperThreshold || scalar <= lowerThreshold) {
                 int bit = scalar >= upperThreshold ? 1 : 0;
-                std::cout << "Satellit " << (satIndex + 1)
-                          << " hat folgendes Bit gesendet: " << bit
-                          << " (Delta: " << delta << ")\n";
+                std::cout << "Satellite " << (satIndex + 1)
+                          << " has sent bit " << bit
+                          << " (delta: " << delta << ")\n";
                 break; // Nur erstes gefundenes Bit pro Satellit ausgeben
             }
         }
