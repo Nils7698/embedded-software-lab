@@ -102,11 +102,11 @@ float calculateScalar(const Signal& signal, const GoldCode& goldCode, int delta)
 
 /// Interpretiert das GPS-Summensignal und identifiziert gesendete Bits der Satelliten
 void interpretSignal(const Signal& signal, const GoldCodeArray& goldCodes) {
-    float noise = 65.0f;
+    
+    float thresholdMargin = 200.0f;
+    float upperThreshold = SEQ_LENGTH - thresholdMargin;
+    float lowerThreshold = -SEQ_LENGTH + thresholdMargin;
 
-    // Schwellwerte für sichere Bit-Detektion
-    float upperThreshold = SEQ_LENGTH - noise;
-    float lowerThreshold = -SEQ_LENGTH + noise;
 
     for (int satIndex = 0; satIndex < SAT_COUNT; ++satIndex) {
         for (int delta = 0; delta < SEQ_LENGTH + 1; ++delta) {
