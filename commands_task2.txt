@@ -1,0 +1,15 @@
+## gprof (GNU Profiler) ##
+
+g++ -pg -O2 -o decode_task2 decode.cpp
+
+./decode_task2 gps_sequence_27.txt
+
+gprof ./decode_task2 gmon.out > report.txt
+
+less report.txt
+
+## perf ##
+
+perf record ./decode_task2 gps_sequence_27.txt
+
+perf report -i perf.data > perf_report.txt
