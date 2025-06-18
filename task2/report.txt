@@ -3,13 +3,13 @@ Flat profile:
 Each sample counts as 0.01 seconds.
   %   cumulative   self              self     total           
  time   seconds   seconds    calls  ms/call  ms/call  name    
-100.00      0.20     0.20        1   200.00   200.00  interpretSignal(std::vector<int, std::allocator<int> > const&, std::array<std::array<int, 1023ul>, 24ul> const&)
-  0.00      0.20     0.00       24     0.00     0.00  createGoldCodeForSat(std::array<int, 1023ul>&, int, int)
-  0.00      0.20     0.00        1     0.00     0.00  createGoldCodes(std::array<std::array<int, 1023ul>, 24ul>&)
-  0.00      0.20     0.00        1     0.00     0.00  parseLineToVector(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
-  0.00      0.20     0.00        1     0.00     0.00  readFile(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)
-  0.00      0.20     0.00        1     0.00     0.00  getSignal(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
-  0.00      0.20     0.00        1     0.00     0.00  std::_Vector_base<int, std::allocator<int> >::~_Vector_base()
+100.00      0.15     0.15        1   150.00   150.00  interpretSignal(std::vector<int, std::allocator<int> > const&, std::array<std::array<int, 1023ul>, 24ul> const&)
+  0.00      0.15     0.00       24     0.00     0.00  createGoldCodeForSat(std::array<int, 1023ul>&, int, int)
+  0.00      0.15     0.00        1     0.00     0.00  createGoldCodes(std::array<std::array<int, 1023ul>, 24ul>&)
+  0.00      0.15     0.00        1     0.00     0.00  parseLineToVector(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+  0.00      0.15     0.00        1     0.00     0.00  readFile(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)
+  0.00      0.15     0.00        1     0.00     0.00  getSignal(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+  0.00      0.15     0.00        1     0.00     0.00  std::_Vector_base<int, std::allocator<int> >::~_Vector_base()
 
  %         the percentage of the total running time of the
 time       program used by this function.
@@ -47,18 +47,18 @@ notice and this notice are preserved.
 		     Call graph (explanation follows)
 
 
-granularity: each sample hit covers 4 byte(s) for 5.00% of 0.20 seconds
+granularity: each sample hit covers 4 byte(s) for 6.67% of 0.15 seconds
 
 index % time    self  children    called     name
                                                  <spontaneous>
-[1]    100.0    0.00    0.20                 main [1]
-                0.20    0.00       1/1           interpretSignal(std::vector<int, std::allocator<int> > const&, std::array<std::array<int, 1023ul>, 24ul> const&) [2]
+[1]    100.0    0.00    0.15                 main [1]
+                0.15    0.00       1/1           interpretSignal(std::vector<int, std::allocator<int> > const&, std::array<std::array<int, 1023ul>, 24ul> const&) [2]
                 0.00    0.00       1/1           createGoldCodes(std::array<std::array<int, 1023ul>, 24ul>&) [10]
                 0.00    0.00       1/1           getSignal(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [13]
                 0.00    0.00       1/1           std::_Vector_base<int, std::allocator<int> >::~_Vector_base() [14]
 -----------------------------------------------
-                0.20    0.00       1/1           main [1]
-[2]    100.0    0.20    0.00       1         interpretSignal(std::vector<int, std::allocator<int> > const&, std::array<std::array<int, 1023ul>, 24ul> const&) [2]
+                0.15    0.00       1/1           main [1]
+[2]    100.0    0.15    0.00       1         interpretSignal(std::vector<int, std::allocator<int> > const&, std::array<std::array<int, 1023ul>, 24ul> const&) [2]
 -----------------------------------------------
                 0.00    0.00      24/24          createGoldCodes(std::array<std::array<int, 1023ul>, 24ul>&) [10]
 [9]      0.0    0.00    0.00      24         createGoldCodeForSat(std::array<int, 1023ul>&, int, int) [9]
